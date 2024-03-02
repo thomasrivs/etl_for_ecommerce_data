@@ -1,41 +1,29 @@
-from google.cloud import bigquery
 from google.oauth2 import service_account
+from google.cloud import storage
+import json
 
 # Create credentials object from the service account JSON key file
 credentials = service_account.Credentials.from_service_account_file(
-    "service_account.json")
-
-# Initialize a BigQuery client
-client = bigquery.Client(credentials=credentials)
+    "/Users/thomasrivieres/etl_for_ecommerce_data/service_account.json")
 
 
-schema = [
-    bigquery.SchemaField("sessions", "INTEGER"),
-    bigquery.SchemaField("add_to_cart", "INTEGER"),
-    bigquery.SchemaField("initiate_checkout", "INTEGER"),
-    bigquery.SchemaField("sales", "INTEGER"),
-    bigquery.SchemaField("country", "STRING"),
-    bigquery.SchemaField("year", "INTEGER"),
-    bigquery.SchemaField("month", "INTEGER"),
-    bigquery.SchemaField("day", "INTEGER"),
-    bigquery.SchemaField("hour", "INTEGER")
-]
+def load_data_into_gcs(data, destination_blob_name):
+    # Initialize GCS client
+    storage_client = storage.Client(credentials=credentials)
 
-# Load the JSON data into BigQuery
-job_config = bigquery.LoadJobConfig()
-job_config.source_format = bigquery.SourceFormat.NEWLINE_DELIMITED_JSON
-job_config.schema = schema
-job_config.write_disposition = bigquery.WriteDisposition.WRITE_APPEND
-job_config.create_disposition = bigquery.CreateDisposition.CREATE_IF_NEEDED
+    # Get the bucket
+    bucket = storage_client.bucket("data_showcase_project")
 
-def load_data_into_table(data):
-    job = client.load_table_from_json(
-        json_rows=data,
-        destination="showcase-project-415618.ecommerce_data.test",
-        job_config=job_config
-    )
+    # Convert data list to JSON string
+    data = json.dumps(data)
 
-    job.result()  # Wait for the job to complete
+    # Define destination blob
+    blob = bucket.blob(destination_blob_name)
 
-if __name__ == "__main__":
-    load_data_into_table([{'sessions': 12403, 'add_to_cart': 4847, 'initiate_checkout': 1347, 'sales': 410, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 1}, {'sessions': 6767, 'add_to_cart': 1473, 'initiate_checkout': 775, 'sales': 269, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 2}, {'sessions': 14749, 'add_to_cart': 5165, 'initiate_checkout': 2901, 'sales': 683, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 3}, {'sessions': 14240, 'add_to_cart': 4252, 'initiate_checkout': 2799, 'sales': 660, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 4}, {'sessions': 12234, 'add_to_cart': 3079, 'initiate_checkout': 2404, 'sales': 540, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 5}, {'sessions': 15282, 'add_to_cart': 5046, 'initiate_checkout': 1918, 'sales': 162, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 6}, {'sessions': 5897, 'add_to_cart': 1291, 'initiate_checkout': 809, 'sales': 128, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 7}, {'sessions': 15712, 'add_to_cart': 4611, 'initiate_checkout': 2301, 'sales': 653, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 8}, {'sessions': 10775, 'add_to_cart': 3133, 'initiate_checkout': 1535, 'sales': 395, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 9}, {'sessions': 9902, 'add_to_cart': 2670, 'initiate_checkout': 1154, 'sales': 279, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 10}, {'sessions': 8139, 'add_to_cart': 1884, 'initiate_checkout': 1271, 'sales': 256, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 11}, {'sessions': 16007, 'add_to_cart': 3970, 'initiate_checkout': 2180, 'sales': 252, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 12}, {'sessions': 16779, 'add_to_cart': 4488, 'initiate_checkout': 2970, 'sales': 727, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 13}, {'sessions': 14044, 'add_to_cart': 3310, 'initiate_checkout': 2572, 'sales': 656, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 14}, {'sessions': 14253, 'add_to_cart': 3475, 'initiate_checkout': 2259, 'sales': 540, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 15}, {'sessions': 11818, 'add_to_cart': 2961, 'initiate_checkout': 1360, 'sales': 134, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 16}, {'sessions': 11195, 'add_to_cart': 4396, 'initiate_checkout': 1803, 'sales': 379, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 17}, {'sessions': 11229, 'add_to_cart': 4417, 'initiate_checkout': 2002, 'sales': 146, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 18}, {'sessions': 13020, 'add_to_cart': 3700, 'initiate_checkout': 1598, 'sales': 649, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 19}, {'sessions': 16630, 'add_to_cart': 5759, 'initiate_checkout': 2624, 'sales': 412, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 20}, {'sessions': 9481, 'add_to_cart': 2172, 'initiate_checkout': 1888, 'sales': 407, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 21}, {'sessions': 13136, 'add_to_cart': 4123, 'initiate_checkout': 1995, 'sales': 588, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 22}, {'sessions': 12114, 'add_to_cart': 3843, 'initiate_checkout': 1523, 'sales': 384, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 23}, {'sessions': 16213, 'add_to_cart': 4447, 'initiate_checkout': 2749, 'sales': 364, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 2, 'hour': 0}, {'sessions': 14831, 'add_to_cart': 5471, 'initiate_checkout': 1896, 'sales': 565, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 2, 'hour': 1}])
+
+    blob.upload_from_string(data)
+
+
+
+#if __name__ == "__main__":
+#    load_data_into_table([{'sessions': 10499, 'add_to_cart': 4091, 'initiate_checkout': 1514, 'sales': 261, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 1}, {'sessions': 15765, 'add_to_cart': 5569, 'initiate_checkout': 1849, 'sales': 389, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 2}, {'sessions': 7453, 'add_to_cart': 1603, 'initiate_checkout': 780, 'sales': 308, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 3}, {'sessions': 13060, 'add_to_cart': 2656, 'initiate_checkout': 2196, 'sales': 376, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 4}, {'sessions': 5968, 'add_to_cart': 2264, 'initiate_checkout': 967, 'sales': 65, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 5}, {'sessions': 9919, 'add_to_cart': 3960, 'initiate_checkout': 1507, 'sales': 425, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 6}, {'sessions': 16683, 'add_to_cart': 4338, 'initiate_checkout': 2362, 'sales': 545, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 7}, {'sessions': 9712, 'add_to_cart': 2442, 'initiate_checkout': 1695, 'sales': 256, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 8}, {'sessions': 13490, 'add_to_cart': 2873, 'initiate_checkout': 1615, 'sales': 372, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 9}, {'sessions': 7768, 'add_to_cart': 2137, 'initiate_checkout': 807, 'sales': 289, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 10}, {'sessions': 7829, 'add_to_cart': 1833, 'initiate_checkout': 1307, 'sales': 116, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 11}, {'sessions': 16279, 'add_to_cart': 5959, 'initiate_checkout': 2291, 'sales': 518, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 12}, {'sessions': 9841, 'add_to_cart': 2876, 'initiate_checkout': 1332, 'sales': 443, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 13}, {'sessions': 16482, 'add_to_cart': 6129, 'initiate_checkout': 2728, 'sales': 632, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 14}, {'sessions': 10082, 'add_to_cart': 2404, 'initiate_checkout': 1359, 'sales': 327, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 15}, {'sessions': 9586, 'add_to_cart': 3041, 'initiate_checkout': 1330, 'sales': 269, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 16}, {'sessions': 9998, 'add_to_cart': 2446, 'initiate_checkout': 1092, 'sales': 135, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 17}, {'sessions': 11145, 'add_to_cart': 3939, 'initiate_checkout': 2159, 'sales': 412, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 18}, {'sessions': 9764, 'add_to_cart': 3194, 'initiate_checkout': 1163, 'sales': 200, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 19}, {'sessions': 13978, 'add_to_cart': 3127, 'initiate_checkout': 1727, 'sales': 180, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 20}, {'sessions': 9487, 'add_to_cart': 2755, 'initiate_checkout': 1738, 'sales': 461, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 21}, {'sessions': 10870, 'add_to_cart': 3964, 'initiate_checkout': 1938, 'sales': 448, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 22}, {'sessions': 6637, 'add_to_cart': 2448, 'initiate_checkout': 1072, 'sales': 243, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 23}, {'sessions': 11135, 'add_to_cart': 3495, 'initiate_checkout': 2145, 'sales': 503, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 2, 'hour': 0}, {'sessions': 10584, 'add_to_cart': 3699, 'initiate_checkout': 1693, 'sales': 457, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 2, 'hour': 1}])
