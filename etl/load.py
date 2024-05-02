@@ -1,71 +1,41 @@
 from google.oauth2 import service_account
 from google.cloud import storage
-import json
-import csv
-import io
+import pyarrow as pa
+import pyarrow.parquet as pq
+import tempfile
 
 # Create credentials object from the service account JSON key file
-credentials = service_account.Credentials.from_service_account_file(
-    "/Users/thomasrivieres/etl_for_ecommerce_data/service_account.json")
-
+credentials = service_account.Credentials.from_service_account_file("service_account.json")
 
 def load_data_into_gcs(data, destination_blob_name):
-    # Initialize GCS client
-    storage_client = storage.Client(credentials=credentials)
-
-    # Get the bucket
-    bucket = storage_client.bucket("data_showcase_project")
-
-    # Convert data list to JSON string
-    data = json.dumps(data)
-
-    # Define destination blob
-    blob = bucket.blob(destination_blob_name)
-
-
-    blob.upload_from_string(data)
-
-
-
-def transform_data_to_csv():
     try:
         # Initialize GCS client
         storage_client = storage.Client(credentials=credentials)
 
+        # Get the bucket
         bucket = storage_client.bucket("data_showcase_project")
 
-        all_blobs = list(bucket.list_blobs())
+        # Convert data list to Parquet file
+        array = pa.array(data)
+        table = pa.Table.from_arrays([array], names=['data'])
 
-        for blob in all_blobs:
-            if blob.name.startswith("raw/"):
-                content_str = blob.download_as_string().decode('utf-8')
-                content_list = json.loads(content_str)
 
-                # Extract fieldnames from the keys of the first dictionary in the content_list
-                fieldnames = content_list[0].keys()
+        # Write Parquet data to a temporary file
+        with tempfile.NamedTemporaryFile(suffix='.parquet') as temp_file:
+            pq.write_table(table, temp_file.name)
 
-                # Write data to CSV file
-                csv_string = io.StringIO()
-                writer = csv.DictWriter(csv_string, fieldnames=fieldnames)
+            # Define destination blob
+            blob = bucket.blob(destination_blob_name)
 
-                # Write header row
-                writer.writeheader()
+            # Upload Parquet data from temporary file
+            blob.upload_from_filename(temp_file.name)
 
-                # Write data rows
-                writer.writerows(content_list)
-
-                csv_string.seek(0)
-
-                # Upload CSV string to GCS bucket
-                blob_name = f'gold/{blob.name.split("/")[-1].split(".")[0]}.csv'
-                blob = bucket.blob(blob_name)
-                blob.upload_from_string(csv_string.getvalue())
-
+        print("Upload complete")
 
     except Exception as e:
         print(f"Error: {e}")
 
-
-
-
+#if __name__ == "__main__":
+#    data_test = [{'sessions': 4390, 'add_to_cart': 1700, 'initiate_checkout': 563, 'sales': 167, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 1}, {'sessions': 5661, 'add_to_cart': 1414, 'initiate_checkout': 1083, 'sales': 197, 'country': 'fr', 'year': 2023, 'month': 1, 'day': 1, 'hour': 2}]
+#    load_data_into_gcs(data_test, "test.parquet")
 

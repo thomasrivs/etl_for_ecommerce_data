@@ -1,4 +1,3 @@
-from config import URL
 from datetime import datetime, timedelta
 
 import requests
@@ -22,7 +21,7 @@ def get_data(country, start_date_hour, end_date_hour):
         }
 
         try:
-            response = requests.get(URL, params=params)
+            response = requests.get("https://ecommerce-data-generator.onrender.com", params=params)
             response.raise_for_status()
             data = response.json()
             data.update(params)
@@ -32,9 +31,9 @@ def get_data(country, start_date_hour, end_date_hour):
             return None
 
         start_date_hour += timedelta(hours=1)
-
+    
     return data_list
-
+    
 
 #if __name__ == "__main__":
-#    get_data("fr", "2023-01-01-01", "2023-01-02-01")
+#    get_data("fr", "2023-01-01-01", "2023-01-01-02")
